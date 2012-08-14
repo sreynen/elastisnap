@@ -90,7 +90,7 @@ Step(function() {
                 console.log(new Date(_(snapshots).chain()
                   .filter(function(snapshot) { return snapshot.progress === '100%' })
                   .first()
-                  .value().startTime).getTime());
+                  .value().startTime).getTime() / 1000);
             } else {
                 _(snapshots).chain()
                   .rest(j.pool)
