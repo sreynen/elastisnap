@@ -63,11 +63,15 @@ Step(function() {
     });
 }, function(err, volumes) {
     if (err) throw err;
-    var group = this.group();
-    _(volumes).each(function(v, k) { 
-        var job = options.jobs[k];
-        ec2.call('CreateSnapshot', {VolumeId: v.volumeSet.item.volumeId, Description: job.description}, group()); 
-    });
+    if (!options.verify) {
+        var group = this.group();
+        _(volumes).each(function(v, k) { 
+            var job = options.jobs[k];
+            ec2.call('CreateSnapshot', {VolumeId: v.volumeSet.item.volumeId, Description: job.description}, group()); 
+        });
+    } else {
+        return err ? err : null
+    }
 }, function(err) {
     if (err) throw err;
     var params = {};
@@ -81,12 +85,20 @@ Step(function() {
                 return snapshot.description === j.description;
             })
             .sortBy(function(snapshot) { return -(new Date(snapshot.startTime).getTime()); })
-            .rest(j.pool)
             .value();
-        _(snapshots).each(function(snapshot) {
-            ec2.call('DeleteSnapshot', {SnapshotId: snapshot.snapshotId}, function(err, result) {
-                if (err) throw err;
-            });
-        });
+            if (options.verify) {
+                console.log(new Date(_(snapshots).chain()
+                  .filter(function(snapshot) { return snapshot.progress === '100%' })
+                  .first()
+                  .value().startTime).getTime());
+            } else {
+                _(snapshots).chain()
+                  .rest(j.pool)
+                  .each(function(snapshot) {
+                      ec2.call('DeleteSnapshot', {SnapshotId: snapshot.snapshotId}, function(err, result) {
+                          if (err) throw err;
+                      });
+                  });
+            }
     });
 });
