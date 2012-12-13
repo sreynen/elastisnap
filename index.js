@@ -26,11 +26,6 @@ _.each(argv, function(v, k) {
     options[k] = argv[k] || options[k];
 });
 
-if (!options.awskey || !options.awssecret) {
-    console.log('Must provide all of awskey, awssecret --config parameters')
-    process.exit(1);
-}
-
 // Allow a single job to be passed in as cli args
 if (argv.instanceid) {
     var job = {};
